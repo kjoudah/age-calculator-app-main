@@ -16,7 +16,8 @@
   3. Allow percentage-based heights in the application
 */
 html,
-body {
+body,
+#root {
   height: 100%;
 }
 /*
@@ -66,4 +67,51 @@ h6 {
 #root,
 #__next {
   isolation: isolate;
+}
+
+:root {
+  --purple: 259, 100%, 65%;
+  --light-red: 0, 100%, 67%;
+
+  --off-white: 0, 0%, 94%;
+  --light-grey: 0, 0%, 86%;
+  --smokey-grey: 0, 1%, 44%;
+  --off-black: 0, 0%, 8%;
+
+  --font-400: 'Poppins Regular';
+  --font-400i: 'Poppins Italic', sans-serif;
+  --font-700: 'Poppins Bold', sans-serif;
+  --font-700i: 'Poppins Bold Italic', sans-serif;
+  --font-800: 'Poppins Extra Bold', sans-serif;
+  --font-800i: 'Poppins Extra Bold Italic', sans-serif;
+}
+
+@font-face {
+  font-family: 'Poppins Regular';
+  src: url(./assets/fonts/Poppins-Regular.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins Italic';
+  src: url(./assets/fonts/Poppins-Italic.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins Bold';
+  src: url(./assets/fonts/Poppins-Bold.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins Bold Italic';
+  src: url(./assets/fonts/Poppins-BoldItalic.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins Extra Bold';
+  src: url(./assets/fonts/Poppins-ExtraBold.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins Extra Bold Italic';
+  src: url(./assets/fonts/Poppins-ExtraBoldItalic.ttf) format('truetype');
 }
