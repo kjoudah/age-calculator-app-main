@@ -22,7 +22,7 @@ module.exports = {
         offBlack: 'hsl(var(--off-black))',
       },
       fontSize: {
-        xxs: '0.5rem',
+        xxs: '0.6rem',
       },
     },
   },
