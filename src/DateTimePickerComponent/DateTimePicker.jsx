@@ -2,24 +2,61 @@ import {
   differenceInYears,
   differenceInMonths,
   differenceInCalendarDays,
-  isValid,
   isExists,
 } from 'date-fns';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+
+import * as yup from 'yup';
 
 export default function DateTimePicker() {
   const now = new Date();
 
-  const [formErrors, setFormErrors] = useState({
-    day: '',
-    month: '',
-    year: '',
+  const schema = yup.object({
+    day: yup
+      .number()
+      .required('This field is required')
+      .typeError('This field is required')
+      .min(1, 'Must be a valid day')
+      .max(31, 'Must be a valid day'),
+    month: yup
+      .number()
+      .required('This field is required')
+      .typeError('This field is required')
+      .min(1, 'Must be a valid month')
+      .max(12, 'Must be a valid month'),
+
+    year: yup
+      .number()
+      .required('This field is required')
+      .typeError('This field is required')
+      .max(now.getFullYear(), 'Must be in the past'),
   });
 
-  const [formValues, setFormValues] = useState({
-    day: '',
-    month: '',
-    year: '',
+  // .when(['month', 'year'], {
+  //   is: (month, year) => month && year,
+  //   then: schema =>
+  //     schema.test('validDate', 'Invalid date', () => {
+  //       return validDate(1, month, year);
+  //     }),
+  // })
+
+  // .test('invalidDate', 'Must be a valid date', value => {
+  //   console.log(value);
+  //   const day = value?.day ?? 0;
+  //   const month = value?.month ?? 0;
+  //   const year = value?.year ?? 0;
+  //   return false;
+  // })
+
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
   });
 
   const [result, setResult] = useState({
@@ -28,224 +65,119 @@ export default function DateTimePicker() {
     year: '--',
   });
 
-  const validDay = (day) => Number.isInteger(day) && day >= 1 && day <= 31;
-  const validMonth = (month) =>
-    Number.isInteger(month) && month >= 1 && month <= 12;
-  const validYear = (year) => Number.isInteger && year <= now.getFullYear;
-
-  const validDate = (day, month, year) =>
-    isValid(new Date(year, month - 1, day));
-
-  const onInputChange = (e) => {
-    setFormValues((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value,
-    }));
+  const validDate = (day, month, year) => {
+    return isExists(year, month - 1, day);
   };
 
-  const fieldsAreEmpty = (formValues) => {
-    return Object.keys(formValues).some((key) => formValues[key].length == 0);
+  const onSubmit = () => {
+    const birthday = new Date(
+      getValues('year'),
+      getValues('month') - 1,
+      getValues('day')
+    );
+    const diffInYears = differenceInYears(now, birthday);
+    const diffInMonths = differenceInMonths(now, birthday);
+    const diffInDays = differenceInCalendarDays(now, birthday);
+    setResult({
+      year: diffInYears,
+      month: diffInMonths - diffInYears * 12,
+      day:
+        diffInDays -
+        (Math.floor(diffInYears * 365) +
+          Math.floor((diffInMonths - diffInYears * 12) * 31)),
+    });
   };
 
-  const invalidFieldValues = (formValues) => validDay(Number(formValues.day));
-  // validDay(formValues.day) &&
-  // validMonth(formValues.month) &&
-  // validYear(formValues.year) &&
-  // validDate(formValues.day, formValues.month, formValues.year);
-
-  // console.log(
-  //   diffInYears,
-  //   diffInMonths - diffInYears * 12,
-  // diffInDays -
-  //   (Math.floor(diffInYears * 365) +
-  //     Math.floor((diffInMonths - diffInYears * 12) * 31))
-  // );
-
-  const invalidDate = (formValues) => {};
-
-  const calculateAge = (formValues) => {};
-
-  const returnErrorMessageForDayField = (formValues) => {
-    let errorMessage = '';
-    let value = formValues.day;
-
-    if (value.length == 0) {
-      errorMessage = 'This field is required';
-    } else if (Number(value) < 1 || Number(value) > 31) {
-      errorMessage = 'Must be a valid day';
-    } else {
-      errorMessage = '';
-    }
-
-    return errorMessage;
+  const dayValidation = {
+    required: true,
+    min: 1,
+    max: 31,
+    validate: validDate,
   };
 
-  const returnErrorMessageForMonthField = (formValues) => {
-    let errorMessage = '';
-    let value = formValues.month;
+  const monthValidation = { required: true, min: 1, max: 12 };
 
-    if (value.length == 0) {
-      errorMessage = 'This field is required';
-    } else if (Number(value) < 1 || Number(value) > 12) {
-      errorMessage = 'Must be a valid month';
-    } else {
-      errorMessage = '';
-    }
-
-    return errorMessage;
-  };
-
-  const returnErrorMessageForYearField = (formValues) => {
-    let errorMessage = '';
-    let value = formValues.year;
-    if (value.length == 0) {
-      errorMessage = 'This field is required';
-    } else if (value > now.getFullYear()) {
-      errorMessage = 'Must be in the past';
-    } else {
-      errorMessage = '';
-    }
-
-    return errorMessage;
-  };
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    // if (fieldsAreEmpty(formValues)) {
-    //   Object.keys(formValues)
-    //     .filter((key) => formValues[key].length == 0)
-    //     .forEach((key) => {
-    //       setFormErrors((prevState) => ({
-    //         ...prevState,
-    //         [key]: 'This field is required',
-    //       }));
-    //     });
-    // } else if (validDay(Number(formValues.day))) {
-    //   // show error message for particular field
-    //   console.log('invalid');
-    // } else if (invalidDate(formValues)) {
-    //   // show invalid date error
-    // } else {
-    //   // make calculation
-    //   calculateAge(formValues);
-
-    setFormErrors((prevState) => ({
-      ...prevState,
-      day: returnErrorMessageForDayField(formValues),
-      month: returnErrorMessageForMonthField(formValues),
-      year: returnErrorMessageForYearField(formValues),
-    }));
-
-    // if (isExists(formValues.year, formValues.month - 1, formValues.day)) {
-    //   setFormErrors({
-    //     day: 'Must be a valid date',
-    //     month: '',
-    //     year: '',
-    //   });
-    // } else {
-    //   const birthday = new Date(
-    //     Number(formValues.year),
-    //     Number(formValues.month - 1),
-    //     Number(formValues.day)
-    //   );
-    //   const diffInYears = differenceInYears(now, birthday);
-    //   const diffInMonths = differenceInMonths(now, birthday);
-    //   const diffInDays = differenceInCalendarDays(now, birthday);
-
-    //   setResult({
-    //     year: diffInYears,
-    //     month: diffInMonths - diffInYears * 12,
-    //     day:
-    //       diffInDays -
-    //       (Math.floor(diffInYears * 365) +
-    //         Math.floor((diffInMonths - diffInYears * 12) * 31)),
-    //   });
-
-    //   setFormErrors({
-    //     day: '',
-    //     month: '',
-    //     year: '',
-    //   });
-    // }
-  };
+  const yearValidation = { required: true, max: now.getFullYear() };
 
   return (
     <section className="flex flex-col w-full bg-white p-8 sm:py-12 sm:px-16 m-8 rounded-2xl rounded-br-[6rem] min-w-fit max-w-2xl">
-      <form>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-row gap-4">
           <div className="flex flex-col gap-1">
             <label
               className={`tracking-wider uppercase font-poppins700 text-xs ${
-                formErrors.day ? 'text-lightRed' : 'text-smokeyGrey'
+                errors?.day ? 'text-lightRed' : 'text-smokeyGrey'
               }`}
             >
               Day
             </label>
             <input
               name="day"
-              onChange={onInputChange}
-              min="1"
-              max="31"
+              {...register('day', dayValidation)}
               placeholder="DD"
               maxLength="2"
               className={`border border-solid  rounded-lg w-20 h-12 p-4 text-black text-md font-poppins800 sm:text-xl sm:w-28 ${
-                formErrors.day ? 'border-lightRed' : 'border-lightGrey'
+                errors?.day ? 'border-lightRed' : 'border-lightGrey'
               } `}
               type="number"
             ></input>
-            <span className="text-lightRed text-xxs font-poppins400i ">
-              {formErrors.day}
+            <span className="text-lightRed text-xs font-poppins400i">
+              {errors?.day?.message}
             </span>
+            {/* <span className="text-lightRed text-xs font-poppins400i">
+              {JSON.stringify(errors)}
+            </span> */}
           </div>
           <div className="flex flex-col gap-1">
             <label
               className={`tracking-wider uppercase font-poppins700 text-xs ${
-                formErrors.month ? 'text-lightRed' : 'text-smokeyGrey'
+                errors?.month ? 'text-lightRed' : 'text-smokeyGrey'
               }`}
             >
               Month
             </label>
             <input
+              {...register('month', monthValidation)}
               name="month"
               placeholder="MM"
-              onChange={onInputChange}
               className={`border border-solid  rounded-lg w-20 h-12 p-4 text-black text-md font-poppins800 sm:text-xl sm:w-28 ${
-                formErrors.month ? 'border-lightRed' : 'border-lightGrey'
+                errors?.month ? 'border-lightRed' : 'border-lightGrey'
               } `}
               type="number"
             ></input>
-            <span className="text-lightRed text-xxs  font-poppins400i ">
-              {formErrors.month}
+
+            <span className="text-lightRed text-xs font-poppins400i">
+              {errors?.month?.message}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
             <label
               className={`tracking-wider uppercase font-poppins700 text-xs ${
-                formErrors.year ? 'text-lightRed' : 'text-smokeyGrey'
+                errors?.year ? 'text-lightRed' : 'text-smokeyGrey'
               }`}
             >
               Year
             </label>
             <input
               name="year"
+              {...register('year', yearValidation)}
               placeholder="YYYY"
-              onChange={onInputChange}
               className={`border border-solid  rounded-lg w-20 h-12 p-4 text-black text-md font-poppins800 sm:text-xl sm:w-28 ${
-                formErrors.year ? 'border-lightRed' : 'border-lightGrey'
+                errors?.year ? 'border-lightRed' : 'border-lightGrey'
               } `}
               type="number"
             ></input>
-            <span className="text-lightRed text-xxs  font-poppins400i ">
-              {formErrors.year}
-            </span>{' '}
+
+            <span className="text-lightRed text-xs font-poppins400i">
+              {errors?.year?.message}
+            </span>
           </div>
         </div>
 
         <div className="relative border-t border-t-lightGrey h-1 w-full my-8 sm:my-12">
           <button
-            onClick={onSubmit}
-            type="button"
+            type="submit"
             className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-14 h-14 bg-purple rounded-full bg-[url(/src/assets/images/icon-arrow.svg)] bg-center bg-no-repeat bg-[length:50%] active:bg-black hover:bg-black sm:left-full sm:w-20 sm:h-20"
             aria-label="Submit"
           ></button>
