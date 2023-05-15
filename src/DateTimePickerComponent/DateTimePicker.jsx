@@ -7,11 +7,13 @@ import {
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useAnimate } from 'framer-motion';
 
 import * as yup from 'yup';
 
 export default function DateTimePicker() {
   const now = new Date();
+  const [scope, animate] = useAnimate();
 
   const schema = yup.object({
     day: yup
@@ -34,26 +36,12 @@ export default function DateTimePicker() {
       .max(now.getFullYear(), 'Must be in the past'),
   });
 
-  // .when(['month', 'year'], {
-  //   is: (month, year) => month && year,
-  //   then: schema =>
-  //     schema.test('validDate', 'Invalid date', () => {
-  //       return validDate(1, month, year);
-  //     }),
-  // })
-
-  // .test('invalidDate', 'Must be a valid date', value => {
-  //   console.log(value);
-  //   const day = value?.day ?? 0;
-  //   const month = value?.month ?? 0;
-  //   const year = value?.year ?? 0;
-  //   return false;
-  // })
-
   const {
     register,
     handleSubmit,
+    setError,
     getValues,
+    clearErrors,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
@@ -66,26 +54,63 @@ export default function DateTimePicker() {
   });
 
   const validDate = (day, month, year) => {
-    return isExists(year, month - 1, day);
+    return isExists(Number(year), Number(month - 1), Number(day));
+  };
+
+  const animateDateNumber = (number, changeState) => {
+    animate(0, number, {
+      duration: 3,
+      onUpdate: value => {
+        changeState(value);
+      },
+    });
   };
 
   const onSubmit = () => {
-    const birthday = new Date(
-      getValues('year'),
-      getValues('month') - 1,
-      getValues('day')
-    );
-    const diffInYears = differenceInYears(now, birthday);
-    const diffInMonths = differenceInMonths(now, birthday);
-    const diffInDays = differenceInCalendarDays(now, birthday);
-    setResult({
-      year: diffInYears,
-      month: diffInMonths - diffInYears * 12,
-      day:
+    if (!validDate(getValues('day'), getValues('month'), getValues('year'))) {
+      setError('invalidDate', {
+        type: 'invalidDate',
+        message: 'Must be a valid date',
+      });
+    } else {
+      clearErrors();
+      const birthday = new Date(
+        getValues('year'),
+        getValues('month') - 1,
+        getValues('day')
+      );
+      const diffInYears = differenceInYears(now, birthday);
+      const diffInMonths = differenceInMonths(now, birthday);
+      const diffInDays = differenceInCalendarDays(now, birthday);
+
+      const finalResultYears = diffInYears;
+      const finalResultMonths = diffInMonths - diffInYears * 12;
+      const finalResultDays =
         diffInDays -
         (Math.floor(diffInYears * 365) +
-          Math.floor((diffInMonths - diffInYears * 12) * 31)),
-    });
+          Math.floor((diffInMonths - diffInYears * 12) * 31));
+
+      animateDateNumber(finalResultYears, value => {
+        setResult(prevState => ({
+          ...prevState,
+          year: value.toFixed(),
+        }));
+      });
+
+      animateDateNumber(finalResultMonths, value => {
+        setResult(prevState => ({
+          ...prevState,
+          month: value.toFixed(),
+        }));
+      });
+
+      animateDateNumber(finalResultDays, value => {
+        setResult(prevState => ({
+          ...prevState,
+          day: value.toFixed(),
+        }));
+      });
+    }
   };
 
   const dayValidation = {
@@ -100,12 +125,12 @@ export default function DateTimePicker() {
   const yearValidation = { required: true, max: now.getFullYear() };
 
   return (
-    <section className="flex flex-col w-full bg-white p-8 sm:py-12 sm:px-16 m-8 rounded-2xl rounded-br-[6rem] min-w-fit max-w-2xl">
+    <section className="loading-transition flex flex-col w-full bg-white p-8 sm:py-12 sm:px-16 m-8 rounded-2xl rounded-br-[6rem] min-w-fit max-w-2xl">
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-row gap-4">
           <div className="flex flex-col gap-1">
             <label
-              className={`tracking-wider uppercase font-poppins700 text-xs ${
+              className={`tracking-wider uppercase font-poppins700 text-xs sm:text-lg ${
                 errors?.day ? 'text-lightRed' : 'text-smokeyGrey'
               }`}
             >
@@ -124,13 +149,13 @@ export default function DateTimePicker() {
             <span className="text-lightRed text-xs font-poppins400i">
               {errors?.day?.message}
             </span>
-            {/* <span className="text-lightRed text-xs font-poppins400i">
-              {JSON.stringify(errors)}
-            </span> */}
+            <span className="text-lightRed text-xs font-poppins400i">
+              {errors?.invalidDate?.message}
+            </span>
           </div>
           <div className="flex flex-col gap-1">
             <label
-              className={`tracking-wider uppercase font-poppins700 text-xs ${
+              className={`tracking-wider uppercase font-poppins700 text-xs  sm:text-lg ${
                 errors?.month ? 'text-lightRed' : 'text-smokeyGrey'
               }`}
             >
@@ -153,7 +178,7 @@ export default function DateTimePicker() {
 
           <div className="flex flex-col gap-1">
             <label
-              className={`tracking-wider uppercase font-poppins700 text-xs ${
+              className={`tracking-wider uppercase font-poppins700 text-xs  sm:text-lg ${
                 errors?.year ? 'text-lightRed' : 'text-smokeyGrey'
               }`}
             >
@@ -184,7 +209,7 @@ export default function DateTimePicker() {
         </div>
       </form>
 
-      <div className="font-poppins700i text-4xl sm:text-7xl">
+      <div ref={scope} className="font-poppins700i text-4xl sm:text-7xl">
         <p className="">
           <span className="text-purple align-middle">{result.year}</span> years
         </p>

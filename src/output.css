@@ -134,3 +134,36 @@ h6 {
 
   src: url(./assets/fonts/Poppins-ExtraBoldItalic.ttf) format('truetype');
 }
+
+body {
+  -webkit-animation: transition 1s ease;
+          animation: transition 1s ease;
+}
+
+@-webkit-keyframes transition {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateY(50%);
+            transform: translateY(50%);
+  }
+
+  100% {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+            transform: translateY(0);
+  }
+}
+
+@keyframes transition {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateY(50%);
+            transform: translateY(50%);
+  }
+
+  100% {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+            transform: translateY(0);
+  }
+}
